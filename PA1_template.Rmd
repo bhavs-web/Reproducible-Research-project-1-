@@ -1,0 +1,100 @@
+---
+title: "Reproducible Research project 1"
+output:
+  word_document: default
+  html_document: default
+---
+Reading the file
+
+```{r, echo= TRUE}
+filedata <- read.csv("activity.csv")
+names(filedata)
+head(filedata)
+```
+
+Calculating total number of steps per day:
+```{r, echo=TRUE}
+stepsperday <- aggregate(steps~date, filedata, sum, na.rm= TRUE)
+hist(stepsperday$steps, main = "Steps taken per day", xlab = "stepsperday", ylab = "steps")
+```
+
+Calculating mean and median total number of steps per day:
+```{r, echo=TRUE}
+meanstepstakenperday <- mean(stepsperday$steps)
+meanstepstakenperday
+medianstepstaken <- median(stepsperday$steps)
+medianstepstaken                           
+```
+
+Calculating average number of steps taken across all days:
+```{r, echo=TRUE}
+everyinterval<- aggregate(steps~interval, data=filedata, mean, na.rm=TRUE)
+plot(steps~interval, data=everyinterval, type="l")
+```
+
+Maximum number of steps:
+```{r, echo=TRUE}
+maxsteps <- everyinterval[which.max(everyinterval$steps),]$interval
+maxsteps
+```
+
+Calculating missing values:
+```{r, echo=TRUE}
+missingval <- sum(is.na(filedata$steps))
+missingval
+meaneveryinterval<-function(interval){
+    everyinterval[everyinterval$interval==interval,]$steps
+}
+```
+
+Creating new dataset with missing values:
+```{r, echo=TRUE}
+newdataset <- filedata
+for(i in 1:nrow(newdataset)){
+    if(is.na(newdataset[i,]$steps)){
+        newdataset[i,]$steps <- meaneveryinterval(newdataset[i,]$interval)
+    }
+}
+stepsperdaynew <- aggregate(steps ~ date, data=newdataset, sum)
+hist(stepsperdaynew$steps, main = "Total steps per day")
+```
+
+mean and median of new datset: 
+```{r, echo=TRUE}
+meannew <- mean(stepsperdaynew$steps)
+meannew
+mediannew <- median(stepsperdaynew$steps)
+```
+
+Indicating whether a given date is a weekday or weekend:
+```{r, echo=TRUE}
+newdataset$date <- as.Date(strptime(newdataset$date, format="%Y-%m-%d"))
+newdataset$day <- weekdays(newdataset$date)
+for (i in 1:nrow(newdataset)) {
+    if (newdataset[i,]$day %in% c("Saturday","Sunday")) {
+        newdataset[i,]$day<-"weekend"
+    }
+    else{
+        newdataset[i,]$day<-"weekday"
+    }
+}
+stepsbyday <- aggregate(newdataset$steps ~ newdataset$interval + newdataset$day, newdataset, mean)
+```
+
+Plotting the average number of steps taken on x-axis and averaged across all weekday days or weekend days on y-axis:
+```{r, echo=TRUE}
+names(stepsbyday) <- c("interval", "day", "steps")
+library(lattice)
+xyplot(steps ~ interval | day, stepsbyday, type = "l", layout = c(1, 2), 
+    xlab = "Interval", ylab = "Number of steps")
+```
+
+
+
+
+
+
+
+
+
+
